@@ -1,51 +1,59 @@
-# A Library Management Server
+# Java Application Deployment with Docker and Jenkins
 
-## Description
-This project is a Java Spring Boot application that serves as a RESTful API for managing books in a library.
+This guide outlines the process of creating a simple Java application, Dockerizing it, setting up a Jenkins pipeline, and deploying the setup.
 
-## Prerequisites
-- Java Development Kit (JDK) 8 or higher
-- Apache Maven
+## Step 1: Create a Simple Java Application
 
-## Setup
-1. Clone the repository to your local machine.
-2. Ensure you have Java and Maven installed on your system.
-3. Navigate to the project directory in your terminal or command prompt.
-4. Run the following Maven command to build the project:
+Created a Java file named `Add.java`.
 
-    ```
-    mvn clean package
-    ```
+## Step 2: Create a Dockerfile
 
-## Usage
-1. Go to ``` /target ``` folder and use below command:
+Create a Dockerfile in the same directory as your Java file with the following content:
+ ```
+# Use the official OpenJDK image as base image
+FROM openjdk:latest
 
-    ```
-    java -jar <Name of the Jar file that was created>
-    ```
+# Set the working directory inside the container
+WORKDIR /usr/src/app
 
-2. Once the application is running, you can access the API endpoints using a tool like Postman or cURL.
-3. The base URL for the API is `http://localhost:4050`.
+# Copy the Java file from the host to the container
+COPY Add.java .
 
-## API Endpoints
-- **GET /books**: Retrieve all books.
-- **GET /books/{id}**: Retrieve a specific book by ID.
-- **POST /books**: Add a new book.
-- **PUT /books/{id}**: Update an existing book.
-- **DELETE /books/{id}**: Delete a book by ID.
+# Compile the Java file
+RUN javac Add.java 
 
-## Example Request
-To add a new book, send a POST request to `http://localhost:8080/books` with a JSON body containing the book details:
-
-```json
-{
-    "id": 1,
-    "title": "Example Book",
-    "author": "John Doe"
-} 
+# Run the Java program when the container starts
+CMD ["java", "Add"]
 ```
 
-## Technologies Used
-- Java
-- Spring Boot
-- Maven
+## Step 3: Create a Jenkinsfile
+
+Created a Jenkinsfile in your project's root directory.
+
+### - Test Stage:
+
+- This stage is named "Test", but it actually checks if Docker is available.
+- The sh command executes a shell command. In this case, it runs ``` sudo docker info ```.
+- By running ``` sudo docker info ```, the pipeline checks if Docker is installed and available on the Jenkins server. The ```sudo``` command is used to execute the docker command with elevated privileges.
+- If Docker is available, the pipeline proceeds to the next stage. Otherwise, it will fail at this stage.
+
+### - Build Stage:
+
+- This stage is named "Build".
+- The ``` sh ``` command builds a Docker image from a Java file using the ```docker build``` command.
+- The ```-t my-java-app ``` flag tags the Docker image with the name ``` my-java-app ```.
+- The ```.``` at the end of the command specifies the build context, which is the current directory where the Dockerfile resides.
+
+### - Deploy Stage:
+
+- This stage is named "Deploy".
+- The ```sh``` command runs a Docker container using the Docker image built in the previous stage.
+- The ```-d``` flag runs the container in detached mode, meaning it runs in the background.
+- The ```--name my-java-container``` flag assigns a name ```my-java-container``` to the container.
+- After running the container, the ```sh``` command fetches the output of the Java application by executing ```docker logs my-java-container```. This command retrieves the logs of the container named ```my-java-container```, allowing you to see the output of the Java application.
+
+## Step 4: Set Up Jenkins Pipeline
+Set up a Jenkins pipeline using the Jenkinsfile created in the previous step. Configure Jenkins to fetch your source code repository and execute the pipeline when changes are detected.
+
+## Step 5: Deploy the Setup
+Run the Jenkins pipeline to build the Docker image and deploy the Java application container.
